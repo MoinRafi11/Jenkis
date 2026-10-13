@@ -1,0 +1,46 @@
+---
+- name: Install and configure Jenkins on Ubuntu VM
+  hosts: jenkins
+  become: true
+
+  tasks:
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - fontconfig
+          - openjdk-21-jre
+          - curl
+        state: present
+
+    - name: Create directory for Jenkins repository key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+        
+    - name: Install Jenkins
+      ansible.builtin.apt:
+        name: jenkins
+        state: present
+        update_cache: true
+
+    - name: Enable and start Jenkins service
+      ansible.builtin.systemd:
+        name: jenkins
+        enabled: true
+        state: started
+
+    - name: Verify Jenkins service status
+      ansible.builtin.command:
+        cmd: systemctl is-active jenkins
+      register: jenkins_status
+      changed_when: false
+
+    - name: Display Jenkins service status
+      ansible.builtin.debug:
+        msg: "Jenkins service status: {{ jenkins_status.stdout }}"
